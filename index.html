@@ -69,11 +69,32 @@
   .badge-bad  { background: rgba(247,95,95,0.12);  color: var(--accent4); }
 
   .error-msg { color: var(--accent4); font-size: 11px; text-align: center; padding: 20px; }
+
+  .alert-pill { display:flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:7px 12px; font-size:11px; }
+  .alert-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; animation:blink 1.5s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .alert-text { color:var(--label); }
+  .alert-text strong { color:var(--text); }
+
+  .funnel-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+  .funnel-name { font-size:11px; color:var(--muted); width:100px; flex-shrink:0; }
+  .funnel-track { flex:1; height:22px; background:var(--bg); border-radius:4px; overflow:hidden; position:relative; }
+  .funnel-fill { height:100%; border-radius:4px; transition:width 1s cubic-bezier(.16,1,.3,1); }
+  .funnel-count { font-family:JetBrains Mono,monospace; font-size:11px; color:var(--text); width:70px; text-align:right; flex-shrink:0; }
+  .funnel-pct { font-size:10px; color:var(--muted); width:36px; text-align:right; flex-shrink:0; }
+
+  .conv-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); }
+  .conv-row:last-child { border-bottom:none; }
+  .conv-name { font-size:12px; color:var(--muted); }
+  .conv-val { font-family:JetBrains Mono,monospace; font-size:14px; font-weight:600; }
 </style>
 </head>
 <body>
 
 <div class="loading-bar" id="loadingBar"></div>
+
+<!-- 即時警示 -->
+<div id="alertsBar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
 
 <header>
   <div>
@@ -126,6 +147,26 @@
   </div>
 </div>
 
+<!-- 轉換漏斗 -->
+<div class="two-col" style="margin-bottom:20px">
+  <div class="card">
+    <div class="card-title">轉換漏斗（近 30 天）</div>
+    <div id="funnelSection"><p style="color:var(--muted);font-size:12px;text-align:center;padding:20px">載入中...</p></div>
+  </div>
+  <div class="card">
+    <div class="card-title">關鍵轉換率</div>
+    <div id="conversionKPIs"></div>
+  </div>
+</div>
+
+<!-- 近 7 日 GMV 趨勢 -->
+<div class="card" style="margin-bottom:20px">
+  <div class="card-title">近 7 日 每日 GMV 趨勢</div>
+  <div style="position:relative;height:160px">
+    <canvas id="trendChart"></canvas>
+  </div>
+</div>
+
 <div class="two-col">
   <div class="card">
     <div class="card-title">熱銷商品 Top 10</div>
@@ -167,7 +208,118 @@ const SHEET_NAME = '工作表1';
 
 const GA4_SHEET_ID = '1D0iWELC8Xt3VUO23jaBpO6XT4eNTZZYP0yOgvCf9gKI';
 const GA4_SHEET_NAME = '流量來源';
+const GA4_EVENTS_SHEET_ID = '1r3yBJgCKKr-hNgRmydcmqvj5TmjxcLQY3Yloq5rxYvw';
+const GA4_EVENTS_SHEET_NAME = '流量來源';
+let ga4Events = {};
 let ga4Data = [];
+
+async function fetchGA4Events() {
+  const url = `https://docs.google.com/spreadsheets/d/${GA4_EVENTS_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(GA4_EVENTS_SHEET_NAME)}&range=A15:C50`;
+  try {
+    const res = await fetch(url);
+    const text = await res.text();
+    const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+    ga4Events = {};
+    if (json.table && json.table.rows) {
+      json.table.rows.forEach(row => {
+        if (!row.c || !row.c[0] || !row.c[0].v) return;
+        const name = String(row.c[0].v).trim();
+        if (!name || name === 'eventName') return;
+        ga4Events[name] = {
+          count: Number((row.c[1] && row.c[1].v) || 0),
+          users: Number((row.c[2] && row.c[2].v) || 0),
+        };
+      });
+    }
+    renderAlerts();
+    renderFunnel();
+  } catch(e) {
+    console.error('GA4 Events error:', e);
+  }
+}
+
+function renderAlerts() {
+  const sessionStart = (ga4Events['session_start'] || {}).count || 0;
+  const addToCart   = (ga4Events['add_to_cart'] || {}).count || 0;
+  const beginCheckout = (ga4Events['begin_checkout'] || {}).count || 0;
+  const purchase    = (ga4Events['purchase'] || {}).count || 0;
+
+  const convRate = sessionStart > 0 ? (purchase / sessionStart * 100).toFixed(2) : 0;
+  const abandonRate = beginCheckout > 0 ? ((1 - purchase / beginCheckout) * 100).toFixed(1) : 0;
+  const cartRate = sessionStart > 0 ? (addToCart / sessionStart * 100).toFixed(1) : 0;
+
+  const alerts = [];
+
+  // 棄單率警示
+  if (abandonRate > 70) {
+    alerts.push({ color: 'var(--accent4)', text: `棄單率 <strong>${abandonRate}%</strong> — 超過警戒值（70%）` });
+  } else if (abandonRate > 60) {
+    alerts.push({ color: 'var(--accent3)', text: `棄單率 <strong>${abandonRate}%</strong> — 需注意` });
+  } else {
+    alerts.push({ color: 'var(--accent2)', text: `棄單率 <strong>${abandonRate}%</strong> — 正常` });
+  }
+
+  // 轉換率
+  if (convRate < 0.5) {
+    alerts.push({ color: 'var(--accent4)', text: `轉換率 <strong>${convRate}%</strong> — 偏低` });
+  } else {
+    alerts.push({ color: 'var(--accent2)', text: `轉換率 <strong>${convRate}%</strong> — 正常` });
+  }
+
+  // 加購率
+  alerts.push({ color: 'var(--accent3)', text: `加購率 <strong>${cartRate}%</strong>（近 30 天）` });
+
+  document.getElementById('alertsBar').innerHTML = alerts.map(a => `
+    <div class="alert-pill">
+      <div class="alert-dot" style="background:${a.color}"></div>
+      <span class="alert-text">${a.text}</span>
+    </div>`).join('');
+}
+
+function renderFunnel() {
+  const sessionStart  = (ga4Events['session_start'] || {}).count || 0;
+  const viewItem      = (ga4Events['view_item'] || {}).count || 0;
+  const addToCart     = (ga4Events['add_to_cart'] || {}).count || 0;
+  const beginCheckout = (ga4Events['begin_checkout'] || {}).count || 0;
+  const purchase      = (ga4Events['purchase'] || {}).count || 0;
+
+  const steps = [
+    { name: '工作階段', count: sessionStart, color: '#4f8ef7' },
+    { name: '瀏覽商品', count: viewItem,     color: '#6ba4f9' },
+    { name: '加入購物車', count: addToCart,  color: '#34d89a' },
+    { name: '前往結帳',  count: beginCheckout, color: '#f7a84f' },
+    { name: '完成購買',  count: purchase,    color: '#a78bfa' },
+  ];
+
+  const maxVal = sessionStart || 1;
+  document.getElementById('funnelSection').innerHTML = steps.map(s => {
+    const pct = (s.count / maxVal * 100).toFixed(1);
+    const stepPct = s === steps[0] ? '100%' : `${(s.count / maxVal * 100).toFixed(1)}%`;
+    return `<div class="funnel-row">
+      <div class="funnel-name">${s.name}</div>
+      <div class="funnel-track">
+        <div class="funnel-fill" style="width:${pct}%;background:${s.color}20;border-left:3px solid ${s.color}"></div>
+      </div>
+      <div class="funnel-count">${s.count.toLocaleString()}</div>
+      <div class="funnel-pct">${stepPct}</div>
+    </div>`;
+  }).join('');
+
+  // Conversion KPIs
+  const convRate    = sessionStart > 0 ? (purchase / sessionStart * 100).toFixed(2) : 0;
+  const abandonRate = beginCheckout > 0 ? ((1 - purchase / beginCheckout) * 100).toFixed(1) : 0;
+  const cartRate    = sessionStart > 0 ? (addToCart / sessionStart * 100).toFixed(1) : 0;
+  const checkoutRate = addToCart > 0 ? (beginCheckout / addToCart * 100).toFixed(1) : 0;
+
+  document.getElementById('conversionKPIs').innerHTML = `
+    <div class="conv-row"><span class="conv-name">整體轉換率</span><span class="conv-val" style="color:var(--accent)">${convRate}%</span></div>
+    <div class="conv-row"><span class="conv-name">棄單率</span><span class="conv-val" style="color:${abandonRate > 70 ? 'var(--accent4)' : 'var(--accent3)'}">${abandonRate}%</span></div>
+    <div class="conv-row"><span class="conv-name">加購率</span><span class="conv-val" style="color:var(--accent2)">${cartRate}%</span></div>
+    <div class="conv-row"><span class="conv-name">結帳率（加購→結帳）</span><span class="conv-val">${checkoutRate}%</span></div>
+    <div class="conv-row"><span class="conv-name">工作階段數</span><span class="conv-val">${sessionStart.toLocaleString()}</span></div>
+    <div class="conv-row"><span class="conv-name">完成購買次數</span><span class="conv-val">${purchase.toLocaleString()}</span></div>
+  `;
+}
 
 async function fetchGA4Data() {
   // 使用 query 從第15行開始抓（跳過標題區）
@@ -332,19 +484,24 @@ function getFiltered() {
     if (startDate && endDate) {
       const raw = r['結帳時間'];
       if (!raw) return false;
-      // Google Sheets 日期格式可能是 "Date(2026,4,1,..." 或字串
       let d;
       if (typeof raw === 'number') {
-        // 序列號轉日期（Google Sheets epoch: Dec 30, 1899）
         d = new Date((raw - 25569) * 86400 * 1000);
       } else if (typeof raw === 'string' && raw.startsWith('Date(')) {
         const parts = raw.match(/Date\((\d+),(\d+),(\d+)/);
         if (parts) d = new Date(+parts[1], +parts[2], +parts[3]);
+      } else if (typeof raw === 'string') {
+        // 格式: "2026-05-01 00:00:00" 直接取前10碼
+        d = new Date(raw.substring(0, 10));
       } else {
         d = new Date(raw);
       }
       if (!d || isNaN(d)) return false;
-      if (d < startDate || d > endDate) return false;
+      // 只比較日期部分
+      const dStr = d.toISOString().slice(0, 10);
+      const sStr = startDate.toISOString().slice(0, 10);
+      const eStr = endDate.toISOString().slice(0, 10);
+      if (dStr < sStr || dStr > eStr) return false;
     }
     // 通路篩選
     if (currentChannel !== 'all') {
@@ -360,6 +517,7 @@ function renderAll() {
   renderTopProducts(data);
   renderChannelBars();
   renderReturnTable();
+  renderTrend();
 }
 
 function renderKPIs(data) {
@@ -473,9 +631,80 @@ function renderReturnTable() {
   }).join('');
 }
 
+
+function renderTrend() {
+  // 計算近 7 日（從今天往回數 7 天）
+  const today = new Date();
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    days.push(d.toISOString().slice(0, 10));
+  }
+
+  // 彙總每日 GMV（只計算銷貨，排除退貨）
+  const dailyGMV = {};
+  days.forEach(d => dailyGMV[d] = 0);
+
+  allData.forEach(r => {
+    if (Number(r['銷售量']) <= 0) return;
+    const raw = r['結帳時間'];
+    if (!raw) return;
+    let dateStr;
+    if (typeof raw === 'string') dateStr = raw.substring(0, 10);
+    else if (typeof raw === 'number') dateStr = new Date((raw - 25569) * 86400 * 1000).toISOString().slice(0, 10);
+    if (days.includes(dateStr)) {
+      dailyGMV[dateStr] += Number(r['折後金額']) || 0;
+    }
+  });
+
+  const labels = days.map(d => d.slice(5)); // MM-DD
+  const values = days.map(d => Math.round(dailyGMV[d]));
+  const maxVal = Math.max(...values) || 1;
+
+  // 用 SVG 畫折線圖
+  const W = 800, H = 140, PAD = 40;
+  const pw = W - PAD * 2;
+  const ph = H - PAD;
+
+  const points = values.map((v, i) => {
+    const x = PAD + (i / (days.length - 1)) * pw;
+    const y = PAD + (1 - v / maxVal) * ph;
+    return [x, y];
+  });
+
+  const pathD = points.map((p, i) => (i === 0 ? `M${p[0]},${p[1]}` : `L${p[0]},${p[1]}`)).join(' ');
+  const areaD = `${pathD} L${points[points.length-1][0]},${H} L${points[0][0]},${H} Z`;
+
+  const dotsSVG = points.map((p, i) => `
+    <circle cx="${p[0]}" cy="${p[1]}" r="4" fill="#4f8ef7" stroke="#0a0d12" stroke-width="2"/>
+    <text x="${p[0]}" y="${p[1]-10}" text-anchor="middle" fill="#94a3b8" font-size="9" font-family="monospace">$${(values[i]/10000).toFixed(1)}萬</text>
+  `).join('');
+
+  const labelsSVG = labels.map((l, i) => {
+    const x = PAD + (i / (days.length - 1)) * pw;
+    return `<text x="${x}" y="${H+4}" text-anchor="middle" fill="#64748b" font-size="10" font-family="Inter,sans-serif">${l}</text>`;
+  }).join('');
+
+  document.getElementById('trendChart').outerHTML = `
+    <svg id="trendChart" viewBox="0 0 ${W} ${H+16}" style="width:100%;height:100%" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4f8ef7" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="#4f8ef7" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="${areaD}" fill="url(#trendGrad)"/>
+      <path d="${pathD}" fill="none" stroke="#4f8ef7" stroke-width="2" stroke-linejoin="round"/>
+      ${dotsSVG}
+      ${labelsSVG}
+    </svg>`;
+}
+
 initDates();
 fetchSheetData();
 fetchGA4Data();
+fetchGA4Events();
 </script>
 </body>
 </html>
