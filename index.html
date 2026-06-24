@@ -6,72 +6,35 @@
 <title>gozo 購物網站 Dashboard</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
-
   :root {
-    --bg: #0a0d12;
-    --surface: #111520;
-    --border: #1e2535;
-    --accent: #4f8ef7;
-    --accent2: #34d89a;
-    --accent3: #f7a84f;
-    --accent4: #f75f5f;
-    --text: #e2e8f0;
-    --muted: #64748b;
-    --label: #94a3b8;
+    --bg: #0a0d12; --surface: #111520; --border: #1e2535;
+    --accent: #4f8ef7; --accent2: #34d89a; --accent3: #f7a84f; --accent4: #f75f5f;
+    --text: #e2e8f0; --muted: #64748b; --label: #94a3b8;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; padding: 24px; }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    min-height: 100vh;
-    padding: 24px;
-  }
-
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid var(--border);
-  }
-
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px; }
   .site-title { font-size: 11px; font-weight: 600; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; margin-bottom: 4px; }
   h1 { font-size: 22px; font-weight: 600; }
+  .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-  .header-right { display: flex; align-items: center; gap: 12px; }
+  .ctrl { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 12px; padding: 7px 12px; cursor: pointer; outline: none; color-scheme: dark; }
+  .date-sep { color: var(--muted); font-size: 12px; }
 
-  .channel-select {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-size: 13px;
-    padding: 8px 14px;
-    cursor: pointer;
-    outline: none;
-  }
+  .quick-btns { display: flex; gap: 4px; }
+  .quick-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--muted); font-size: 11px; font-weight: 600; padding: 6px 10px; cursor: pointer; transition: all 0.15s; }
+  .quick-btn:hover, .quick-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
   .last-update { font-size: 11px; color: var(--muted); }
 
-  .loading-bar {
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    border-radius: 2px;
-    margin-bottom: 24px;
-    animation: loading 1.5s ease-in-out infinite;
-    display: none;
-  }
+  .loading-bar { height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; margin-bottom: 20px; animation: pulse 1.5s ease-in-out infinite; display: none; }
   .loading-bar.active { display: block; }
-  @keyframes loading { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
   .section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
 
-  /* KPI cards */
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
   .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; position: relative; overflow: hidden; }
   .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: 12px 12px 0 0; }
   .kpi-card.blue::before { background: var(--accent); }
@@ -79,55 +42,31 @@
   .kpi-card.orange::before { background: var(--accent3); }
   .kpi-card.red::before { background: var(--accent4); }
   .kpi-label { font-size: 11px; color: var(--muted); margin-bottom: 8px; font-weight: 500; }
-  .kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; line-height: 1; margin-bottom: 8px; }
-  .kpi-sub { font-size: 11px; color: var(--muted); }
+  .kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600; line-height: 1; margin-bottom: 6px; }
+  .kpi-sub { font-size: 10px; color: var(--muted); }
 
-  /* Two col */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-  .card-title { font-size: 12px; font-weight: 600; color: var(--label); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .card-title { font-size: 11px; font-weight: 600; color: var(--label); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.08em; }
 
-  /* Table */
   .data-table { width: 100%; border-collapse: collapse; }
-  .data-table th { font-size: 10px; font-weight: 600; color: var(--muted); text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.06em; }
-  .data-table td { font-size: 12px; padding: 9px 8px; border-bottom: 1px solid rgba(30,37,53,0.5); color: var(--text); }
+  .data-table th { font-size: 10px; font-weight: 600; color: var(--muted); text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--border); text-transform: uppercase; }
+  .data-table td { font-size: 12px; padding: 8px 8px; border-bottom: 1px solid rgba(30,37,53,0.5); }
   .data-table tr:last-child td { border-bottom: none; }
   .data-table td.mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
   .rank { font-size: 10px; font-weight: 700; color: var(--muted); }
 
-  /* Channel bars */
-  .channel-bar-wrap { margin-bottom: 8px; }
-  .channel-bar-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; }
-  .channel-bar-name { color: var(--muted); }
-  .channel-bar-val { font-family: 'JetBrains Mono', monospace; color: var(--text); font-size: 10px; }
-  .channel-bar-track { height: 5px; background: var(--bg); border-radius: 3px; overflow: hidden; }
-  .channel-bar-fill { height: 100%; border-radius: 3px; transition: width 1s cubic-bezier(.16,1,.3,1); }
+  .ch-bar-wrap { margin-bottom: 7px; }
+  .ch-bar-lbl { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; }
+  .ch-bar-name { color: var(--muted); }
+  .ch-bar-val { font-family: 'JetBrains Mono', monospace; color: var(--text); font-size: 10px; }
+  .ch-bar-track { height: 5px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+  .ch-bar-fill { height: 100%; border-radius: 3px; transition: width 1s cubic-bezier(.16,1,.3,1); }
 
-  /* Donut */
-  .donut-wrap { display: flex; align-items: center; gap: 16px; }
-  .donut-legend { display: flex; flex-direction: column; gap: 6px; }
-  .legend-row { display: flex; align-items: center; gap: 8px; font-size: 11px; }
-  .legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
-  .legend-name { color: var(--muted); flex: 1; }
-  .legend-val { font-family: 'JetBrains Mono', monospace; font-size: 10px; }
-
-  /* Metric rows */
-  .metric-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
-  .metric-row:last-child { border-bottom: none; }
-  .metric-name { font-size: 12px; color: var(--muted); }
-  .metric-val { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; }
-
-  /* Badge */
   .badge { font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 600; }
   .badge-good { background: rgba(52,216,154,0.12); color: var(--accent2); }
   .badge-warn { background: rgba(247,168,79,0.12); color: var(--accent3); }
-  .badge-bad { background: rgba(247,95,95,0.12); color: var(--accent4); }
-
-  /* Error/loading states */
-  .skeleton { background: linear-gradient(90deg, var(--border) 25%, var(--surface) 50%, var(--border) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; }
-  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  .badge-bad  { background: rgba(247,95,95,0.12);  color: var(--accent4); }
 
   .error-msg { color: var(--accent4); font-size: 11px; text-align: center; padding: 20px; }
 </style>
@@ -142,304 +81,393 @@
     <h1>關鍵數字儀表板</h1>
   </div>
   <div class="header-right">
-    <select class="channel-select" id="channelSelect" onchange="filterChannel()">
+    <!-- 快速日期按鈕 -->
+    <div class="quick-btns">
+      <button class="quick-btn" onclick="setQuick('week')">本週</button>
+      <button class="quick-btn" onclick="setQuick('month')">本月</button>
+      <button class="quick-btn" onclick="setQuick('quarter')">本季</button>
+    </div>
+    <!-- 自訂日期 -->
+    <input type="date" class="ctrl" id="dateStart" onchange="applyDate()">
+    <span class="date-sep">—</span>
+    <input type="date" class="ctrl" id="dateEnd" onchange="applyDate()">
+    <!-- 通路 -->
+    <select class="ctrl" id="channelSelect" onchange="filterChannel()">
       <option value="all">全部通路</option>
-      <option value="G_台灣官網">官網</option>
-      <option value="G_Momo">MOMO（含超取）</option>
-      <option value="G_蝦皮">蝦皮</option>
+      <option value="官網">官網</option>
+      <option value="MOMO">MOMO</option>
+      <option value="蝦皮">蝦皮</option>
     </select>
     <div class="last-update" id="lastUpdate">載入中...</div>
   </div>
 </header>
 
-<!-- KPIs -->
 <div class="section-label">核心數字</div>
 <div class="kpi-grid">
   <div class="kpi-card blue">
     <div class="kpi-label">GMV 折後金額</div>
     <div class="kpi-value" id="kpiGMV">—</div>
-    <div class="kpi-sub" id="kpiGMVSub">載入中...</div>
+    <div class="kpi-sub" id="kpiGMVSub"></div>
   </div>
   <div class="kpi-card green">
     <div class="kpi-label">訂單數</div>
     <div class="kpi-value" id="kpiOrders">—</div>
-    <div class="kpi-sub" id="kpiOrdersSub">載入中...</div>
+    <div class="kpi-sub" id="kpiOrdersSub"></div>
   </div>
   <div class="kpi-card orange">
     <div class="kpi-label">平均訂單金額 AOV</div>
     <div class="kpi-value" id="kpiAOV">—</div>
-    <div class="kpi-sub" id="kpiAOVSub">載入中...</div>
+    <div class="kpi-sub" id="kpiAOVSub"></div>
   </div>
   <div class="kpi-card red">
     <div class="kpi-label">退貨率</div>
     <div class="kpi-value" id="kpiReturn">—</div>
-    <div class="kpi-sub" id="kpiReturnSub">載入中...</div>
+    <div class="kpi-sub" id="kpiReturnSub"></div>
   </div>
 </div>
 
-<!-- Row 2 -->
 <div class="two-col">
-  <!-- Top products -->
   <div class="card">
     <div class="card-title">熱銷商品 Top 10</div>
     <table class="data-table">
-      <thead>
-        <tr><th>#</th><th>商品名稱</th><th>銷量</th><th>折後金額</th></tr>
-      </thead>
-      <tbody id="topProducts">
-        <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">載入中...</td></tr>
-      </tbody>
+      <thead><tr><th>#</th><th>商品名稱</th><th>銷量</th><th>折後金額</th></tr></thead>
+      <tbody id="topProducts"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">載入中...</td></tr></tbody>
     </table>
   </div>
-
-  <!-- Channel breakdown -->
   <div class="card">
     <div class="card-title">各通路 GMV 佔比</div>
     <div id="channelBars" style="margin-bottom:20px"></div>
-    <div class="card-title" style="margin-top:8px">退貨率分析</div>
+    <div class="card-title">退貨率分析</div>
     <table class="data-table">
-      <thead>
-        <tr><th>通路</th><th>銷貨數</th><th>退貨數</th><th>退貨率</th></tr>
-      </thead>
-      <tbody id="returnTable">
-        <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px">載入中...</td></tr>
-      </tbody>
+      <thead><tr><th>通路</th><th>銷貨數</th><th>退貨數</th><th>退貨率</th></tr></thead>
+      <tbody id="returnTable"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px">載入中...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- GA4 流量來源 -->
+<div class="section-label" style="margin-top:8px">GA4 流量分析</div>
+<div class="two-col">
+  <div class="card">
+    <div class="card-title">流量來源 Top 10（活躍使用者）</div>
+    <div id="ga4TrafficBars"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">流量來源明細</div>
+    <table class="data-table">
+      <thead><tr><th>#</th><th>來源/媒介</th><th>使用者</th><th>工作階段</th></tr></thead>
+      <tbody id="ga4TrafficTable"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">載入中...</td></tr></tbody>
     </table>
   </div>
 </div>
 
 <script>
-// ============================================================
-// 設定區 — 只需修改這裡
-// ============================================================
 const SHEET_ID = '1WY5XCvZ5_qb9HpmlxPKJ7tAMG5OpLZ7QSSUKPUJQ1gk';
 const SHEET_NAME = '工作表1';
 
-// 欄位對應（根據你的日曜資料欄位名稱）
-const COL = {
-  電商平台: '電商平台',    // DF欄
-  折後金額: '折後金額',
-  銷售量:   '銷售量',
-  來源單號: '來源單號',
-  品名:     '品名',
-  結帳時間: '結帳時間',
-};
+const GA4_SHEET_ID = '12HHZ_14MfV7m_ymFMflzpKM5Z0fuhKE4-E9Djr4n5CQ';
+let ga4Data = [];
 
-// 要排除的品名
-const EXCLUDE_PRODUCTS = ['電商運費', '購物金(紅利)', '購物金（紅利）'];
-
-// 通路群組定義
-function getChannelGroup(platform) {
-  if (!platform) return '其他';
-  if (platform.includes('台灣官網') && platform.startsWith('G_')) return '官網';
-  if (platform.includes('Momo') || platform.includes('momo')) return 'MOMO';
-  if (platform.includes('蝦皮')) return '蝦皮';
-  return '其他';
-}
-
-// ============================================================
-// 資料抓取
-// ============================================================
-let allData = [];
-let filteredData = [];
-let currentChannel = 'all';
-
-async function fetchSheetData() {
-  document.getElementById('loadingBar').classList.add('active');
-
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
-
+async function fetchGA4Data() {
+  const url = `https://docs.google.com/spreadsheets/d/${GA4_SHEET_ID}/gviz/tq?tqx=out:json`;
   try {
     const res = await fetch(url);
     const text = await res.text();
-    // Google 回傳格式是 /*O_o*/\ngoogle.visualization.Query.setResponse({...})
     const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
-
     const cols = json.table.cols.map(c => c.label);
-    const rows = json.table.rows;
+    ga4Data = json.table.rows
+      .map(row => {
+        const obj = {};
+        cols.forEach((col, i) => {
+          const cell = row.c[i];
+          obj[col] = cell ? (cell.v !== null ? cell.v : '') : '';
+        });
+        return obj;
+      })
+      .filter(r => r['工作階段來源/媒介'] && r['工作階段來源/媒介'] !== '工作階段來源/媒介');
+    renderGA4();
+  } catch(e) {
+    document.getElementById('ga4TrafficTable').innerHTML = '<tr><td colspan="4" class="error-msg">⚠️ GA4 資料載入失敗</td></tr>';
+  }
+}
 
-    allData = rows.map(row => {
+function renderGA4() {
+  const sorted = [...ga4Data]
+    .sort((a, b) => (Number(b['活躍使用者']) || 0) - (Number(a['活躍使用者']) || 0))
+    .slice(0, 10);
+
+  if (!sorted.length) return;
+
+  const maxVal = Number(sorted[0]['活躍使用者']) || 1;
+  const colors = ['#4f8ef7','#34d89a','#f7a84f','#a78bfa','#f75f5f','#06d6a0','#f472b6','#fb923c','#facc15','#64748b'];
+
+  // 長條圖
+  document.getElementById('ga4TrafficBars').innerHTML = sorted.map((row, i) => {
+    const val = Number(row['活躍使用者']) || 0;
+    const pct = (val / maxVal * 100).toFixed(1);
+    const name = row['工作階段來源/媒介'] || '';
+    return `<div class="ch-bar-wrap">
+      <div class="ch-bar-lbl">
+        <span class="ch-bar-name" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span>
+        <span class="ch-bar-val">${val.toLocaleString()}</span>
+      </div>
+      <div class="ch-bar-track">
+        <div class="ch-bar-fill" style="width:${pct}%;background:${colors[i]}"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // 表格
+  document.getElementById('ga4TrafficTable').innerHTML = sorted.map((row, i) => `
+    <tr>
+      <td class="rank">${i+1}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${row['工作階段來源/媒介']}">${row['工作階段來源/媒介']}</td>
+      <td class="mono">${(Number(row['活躍使用者'])||0).toLocaleString()}</td>
+      <td class="mono">${(Number(row['工作階段'])||0).toLocaleString()}</td>
+    </tr>`).join('');
+}
+const EXCLUDE_PRODUCTS = ['電商運費', '購物金(紅利)', '購物金（紅利）'];
+
+let allData = [];
+let startDate = null;
+let endDate = null;
+let currentChannel = 'all';
+
+function getChannelGroup(p) {
+  if (!p) return '其他';
+  if (p.includes('台灣官網') && p.startsWith('G_')) return '官網';
+  if (p.includes('Momo') || p.includes('momo')) return 'MOMO';
+  if (p.includes('蝦皮')) return '蝦皮';
+  return '其他';
+}
+
+// 初始化日期：本月
+function initDates() {
+  const now = new Date();
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+  startDate = firstDay;
+  endDate = now;
+  document.getElementById('dateStart').value = fmt(firstDay);
+  document.getElementById('dateEnd').value = fmt(now);
+}
+
+function fmt(d) {
+  return d.toISOString().slice(0, 10);
+}
+
+function setQuick(period) {
+  const now = new Date();
+  document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  if (period === 'week') {
+    const day = now.getDay() || 7;
+    startDate = new Date(now); startDate.setDate(now.getDate() - day + 1);
+    endDate = now;
+  } else if (period === 'month') {
+    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    endDate = now;
+  } else if (period === 'quarter') {
+    const q = Math.floor(now.getMonth() / 3);
+    startDate = new Date(now.getFullYear(), q * 3, 1);
+    endDate = now;
+  }
+  document.getElementById('dateStart').value = fmt(startDate);
+  document.getElementById('dateEnd').value = fmt(endDate);
+  renderAll();
+}
+
+function applyDate() {
+  document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+  startDate = new Date(document.getElementById('dateStart').value);
+  endDate = new Date(document.getElementById('dateEnd').value);
+  endDate.setHours(23, 59, 59);
+  renderAll();
+}
+
+function filterChannel() {
+  currentChannel = document.getElementById('channelSelect').value;
+  renderAll();
+}
+
+async function fetchSheetData() {
+  document.getElementById('loadingBar').classList.add('active');
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+  try {
+    const res = await fetch(url);
+    const text = await res.text();
+    const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+    const cols = json.table.cols.map(c => c.label);
+    allData = json.table.rows.map(row => {
       const obj = {};
       cols.forEach((col, i) => {
         const cell = row.c[i];
         obj[col] = cell ? (cell.v !== null ? cell.v : '') : '';
       });
       return obj;
-    });
-
-    // 過濾只保留 G_ 開頭、排除 R_ M_
-    allData = allData.filter(row => {
-      const p = row[COL.電商平台] || '';
+    }).filter(r => {
+      const p = r['電商平台'] || '';
       return p.startsWith('G_') && !p.startsWith('R_') && !p.startsWith('M_');
     });
 
-    document.getElementById('lastUpdate').textContent = `最後更新：${new Date().toLocaleString('zh-TW')}`;
-    filterChannel();
-
+    document.getElementById('lastUpdate').textContent = `更新：${new Date().toLocaleString('zh-TW')}`;
+    renderAll();
   } catch (err) {
-    console.error(err);
-    document.getElementById('lastUpdate').textContent = '⚠️ 資料載入失敗';
-    showError();
+    document.getElementById('lastUpdate').textContent = '⚠️ 載入失敗';
+    document.getElementById('topProducts').innerHTML = '<tr><td colspan="4" class="error-msg">⚠️ 無法載入，請確認試算表權限為「知道連結的任何人可檢視」</td></tr>';
   }
-
   document.getElementById('loadingBar').classList.remove('active');
 }
 
-function filterChannel() {
-  currentChannel = document.getElementById('channelSelect').value;
-
-  if (currentChannel === 'all') {
-    filteredData = allData;
-  } else if (currentChannel === 'G_Momo') {
-    filteredData = allData.filter(r => {
-      const p = r[COL.電商平台] || '';
-      return p.includes('Momo') || p.includes('momo');
-    });
-  } else {
-    filteredData = allData.filter(r => r[COL.電商平台] === currentChannel);
-  }
-
-  renderAll();
+function getFiltered() {
+  return allData.filter(r => {
+    // 日期篩選
+    if (startDate && endDate) {
+      const raw = r['結帳時間'];
+      if (!raw) return false;
+      // Google Sheets 日期格式可能是 "Date(2026,4,1,..." 或字串
+      let d;
+      if (typeof raw === 'number') {
+        // 序列號轉日期（Google Sheets epoch: Dec 30, 1899）
+        d = new Date((raw - 25569) * 86400 * 1000);
+      } else if (typeof raw === 'string' && raw.startsWith('Date(')) {
+        const parts = raw.match(/Date\((\d+),(\d+),(\d+)/);
+        if (parts) d = new Date(+parts[1], +parts[2], +parts[3]);
+      } else {
+        d = new Date(raw);
+      }
+      if (!d || isNaN(d)) return false;
+      if (d < startDate || d > endDate) return false;
+    }
+    // 通路篩選
+    if (currentChannel !== 'all') {
+      if (getChannelGroup(r['電商平台']) !== currentChannel) return false;
+    }
+    return true;
+  });
 }
 
-// ============================================================
-// 計算與渲染
-// ============================================================
 function renderAll() {
-  renderKPIs();
-  renderTopProducts();
+  const data = getFiltered();
+  renderKPIs(data);
+  renderTopProducts(data);
   renderChannelBars();
   renderReturnTable();
 }
 
-function renderKPIs() {
-  // 只計算銷貨（銷售量 > 0）
-  const sales = filteredData.filter(r => Number(r[COL.銷售量]) > 0);
-  const returns = filteredData.filter(r => Number(r[COL.銷售量]) < 0);
+function renderKPIs(data) {
+  const sales = data.filter(r => Number(r['銷售量']) > 0);
+  const returns = data.filter(r => Number(r['銷售量']) < 0);
 
-  // GMV
-  const gmv = sales.reduce((s, r) => s + (Number(r[COL.折後金額]) || 0), 0);
-  document.getElementById('kpiGMV').textContent = '$' + gmv.toLocaleString('zh-TW');
-  document.getElementById('kpiGMVSub').textContent = `銷貨金額合計`;
+  const gmv = sales.reduce((s, r) => s + (Number(r['折後金額']) || 0), 0);
+  document.getElementById('kpiGMV').textContent = '$' + Math.round(gmv).toLocaleString('zh-TW');
+  document.getElementById('kpiGMVSub').textContent = `${sales.length.toLocaleString()} 筆銷售記錄`;
 
-  // 訂單數（不重複來源單號）
-  const orderSet = new Set(sales.map(r => r[COL.來源單號]).filter(Boolean));
+  const orderSet = new Set(sales.map(r => r['來源單號']).filter(Boolean));
   document.getElementById('kpiOrders').textContent = orderSet.size.toLocaleString('zh-TW');
-  document.getElementById('kpiOrdersSub').textContent = `不重複訂單數`;
+  document.getElementById('kpiOrdersSub').textContent = '不重複訂單數';
 
-  // AOV
   const aov = orderSet.size > 0 ? Math.round(gmv / orderSet.size) : 0;
   document.getElementById('kpiAOV').textContent = '$' + aov.toLocaleString('zh-TW');
-  document.getElementById('kpiAOVSub').textContent = `GMV ÷ 訂單數`;
+  document.getElementById('kpiAOVSub').textContent = 'GMV ÷ 訂單數';
 
-  // 退貨率
-  const salesQty = sales.reduce((s, r) => s + Math.abs(Number(r[COL.銷售量]) || 0), 0);
-  const returnQty = returns.reduce((s, r) => s + Math.abs(Number(r[COL.銷售量]) || 0), 0);
-  const returnRate = salesQty > 0 ? (returnQty / salesQty * 100).toFixed(1) : 0;
-  document.getElementById('kpiReturn').textContent = returnRate + '%';
-  document.getElementById('kpiReturnSub').textContent = `退貨量 ${returnQty} ÷ 銷貨量 ${salesQty}`;
+  const salesQty = sales.reduce((s, r) => s + Math.abs(Number(r['銷售量']) || 0), 0);
+  const returnQty = returns.reduce((s, r) => s + Math.abs(Number(r['銷售量']) || 0), 0);
+  const rate = salesQty > 0 ? (returnQty / salesQty * 100).toFixed(1) : 0;
+  document.getElementById('kpiReturn').textContent = rate + '%';
+  document.getElementById('kpiReturnSub').textContent = `退貨 ${returnQty} ÷ 銷貨 ${salesQty}`;
 }
 
-function renderTopProducts() {
-  const sales = filteredData.filter(r =>
-    Number(r[COL.銷售量]) > 0 && !EXCLUDE_PRODUCTS.includes(r[COL.品名])
-  );
-
-  // 彙總商品
-  const prodMap = {};
+function renderTopProducts(data) {
+  const sales = data.filter(r => Number(r['銷售量']) > 0 && !EXCLUDE_PRODUCTS.includes(r['品名']));
+  const map = {};
   sales.forEach(r => {
-    const name = r[COL.品名] || '未知';
-    if (!prodMap[name]) prodMap[name] = { qty: 0, amt: 0 };
-    prodMap[name].qty += Number(r[COL.銷售量]) || 0;
-    prodMap[name].amt += Number(r[COL.折後金額]) || 0;
+    const n = r['品名'] || '未知';
+    if (!map[n]) map[n] = { qty: 0, amt: 0 };
+    map[n].qty += Number(r['銷售量']) || 0;
+    map[n].amt += Number(r['折後金額']) || 0;
   });
-
-  const sorted = Object.entries(prodMap)
-    .sort((a, b) => b[1].qty - a[1].qty)
-    .slice(0, 10);
-
+  const sorted = Object.entries(map).sort((a, b) => b[1].qty - a[1].qty).slice(0, 10);
   const tbody = document.getElementById('topProducts');
-  if (sorted.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">無資料</td></tr>';
-    return;
-  }
-
+  if (!sorted.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">此日期範圍無資料</td></tr>'; return; }
   tbody.innerHTML = sorted.map(([name, d], i) => `
     <tr>
-      <td class="rank">${i + 1}</td>
+      <td class="rank">${i+1}</td>
       <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${name}">${name}</td>
       <td class="mono">${d.qty.toLocaleString()}</td>
       <td class="mono">$${Math.round(d.amt).toLocaleString()}</td>
-    </tr>
-  `).join('');
+    </tr>`).join('');
 }
 
 function renderChannelBars() {
-  // 各通路 GMV
-  const channelMap = {};
-  allData.filter(r => Number(r[COL.銷售量]) > 0).forEach(r => {
-    const g = getChannelGroup(r[COL.電商平台]);
-    if (!channelMap[g]) channelMap[g] = 0;
-    channelMap[g] += Number(r[COL.折後金額]) || 0;
+  // 通路佔比用全部篩選後資料（含日期，但不含通路篩選）
+  const data = allData.filter(r => {
+    if (startDate && endDate) {
+      const raw = r['結帳時間'];
+      if (!raw) return false;
+      let d;
+      if (typeof raw === 'number') d = new Date((raw - 25569) * 86400 * 1000);
+      else if (typeof raw === 'string' && raw.startsWith('Date(')) {
+        const parts = raw.match(/Date\((\d+),(\d+),(\d+)/);
+        if (parts) d = new Date(+parts[1], +parts[2], +parts[3]);
+      } else d = new Date(raw);
+      if (!d || isNaN(d) || d < startDate || d > endDate) return false;
+    }
+    return Number(r['銷售量']) > 0;
   });
 
-  const total = Object.values(channelMap).reduce((s, v) => s + v, 0);
+  const map = {};
+  data.forEach(r => {
+    const g = getChannelGroup(r['電商平台']);
+    if (!map[g]) map[g] = 0;
+    map[g] += Number(r['折後金額']) || 0;
+  });
+  const total = Object.values(map).reduce((s, v) => s + v, 0);
   const colors = { '官網': '#4f8ef7', 'MOMO': '#f7a84f', '蝦皮': '#34d89a', '其他': '#64748b' };
-
-  const sorted = Object.entries(channelMap).sort((a, b) => b[1] - a[1]);
-
+  const sorted = Object.entries(map).sort((a, b) => b[1] - a[1]);
   document.getElementById('channelBars').innerHTML = sorted.map(([name, val]) => {
     const pct = total > 0 ? (val / total * 100).toFixed(1) : 0;
-    const color = colors[name] || '#64748b';
-    return `
-      <div class="channel-bar-wrap">
-        <div class="channel-bar-label">
-          <span class="channel-bar-name">${name}</span>
-          <span class="channel-bar-val">${pct}% · $${Math.round(val).toLocaleString()}</span>
-        </div>
-        <div class="channel-bar-track">
-          <div class="channel-bar-fill" style="width:${pct}%;background:${color}"></div>
-        </div>
-      </div>
-    `;
+    return `<div class="ch-bar-wrap">
+      <div class="ch-bar-lbl"><span class="ch-bar-name">${name}</span><span class="ch-bar-val">${pct}% · $${Math.round(val).toLocaleString()}</span></div>
+      <div class="ch-bar-track"><div class="ch-bar-fill" style="width:${pct}%;background:${colors[name]||'#64748b'}"></div></div>
+    </div>`;
   }).join('');
 }
 
 function renderReturnTable() {
-  const channelMap = {};
-
-  allData.forEach(r => {
-    const g = getChannelGroup(r[COL.電商平台]);
-    if (!channelMap[g]) channelMap[g] = { sales: 0, returns: 0 };
-    const qty = Number(r[COL.銷售量]) || 0;
-    if (qty > 0) channelMap[g].sales += qty;
-    if (qty < 0) channelMap[g].returns += Math.abs(qty);
+  const data = allData.filter(r => {
+    if (startDate && endDate) {
+      const raw = r['結帳時間'];
+      if (!raw) return false;
+      let d;
+      if (typeof raw === 'number') d = new Date((raw - 25569) * 86400 * 1000);
+      else if (typeof raw === 'string' && raw.startsWith('Date(')) {
+        const parts = raw.match(/Date\((\d+),(\d+),(\d+)/);
+        if (parts) d = new Date(+parts[1], +parts[2], +parts[3]);
+      } else d = new Date(raw);
+      if (!d || isNaN(d) || d < startDate || d > endDate) return false;
+    }
+    return true;
   });
 
+  const map = {};
+  data.forEach(r => {
+    const g = getChannelGroup(r['電商平台']);
+    if (!map[g]) map[g] = { sales: 0, returns: 0 };
+    const qty = Number(r['銷售量']) || 0;
+    if (qty > 0) map[g].sales += qty;
+    if (qty < 0) map[g].returns += Math.abs(qty);
+  });
   const tbody = document.getElementById('returnTable');
-  const rows = Object.entries(channelMap).sort((a, b) => b[1].sales - a[1].sales);
-
-  tbody.innerHTML = rows.map(([name, d]) => {
+  tbody.innerHTML = Object.entries(map).sort((a,b) => b[1].sales - a[1].sales).map(([name, d]) => {
     const rate = d.sales > 0 ? (d.returns / d.sales * 100).toFixed(1) : 0;
-    const badgeClass = rate > 20 ? 'badge-bad' : rate > 10 ? 'badge-warn' : 'badge-good';
-    return `
-      <tr>
-        <td>${name}</td>
-        <td class="mono">${d.sales.toLocaleString()}</td>
-        <td class="mono">${d.returns.toLocaleString()}</td>
-        <td><span class="badge ${badgeClass}">${rate}%</span></td>
-      </tr>
-    `;
+    const cls = rate > 20 ? 'badge-bad' : rate > 10 ? 'badge-warn' : 'badge-good';
+    return `<tr><td>${name}</td><td class="mono">${d.sales.toLocaleString()}</td><td class="mono">${d.returns.toLocaleString()}</td><td><span class="badge ${cls}">${rate}%</span></td></tr>`;
   }).join('');
 }
 
-function showError() {
-  document.getElementById('topProducts').innerHTML =
-    '<tr><td colspan="4" class="error-msg">⚠️ 無法載入資料，請確認試算表權限為「知道連結的任何人可檢視」</td></tr>';
-}
-
-// 啟動
+initDates();
 fetchSheetData();
+fetchGA4Data();
 </script>
 </body>
 </html>
