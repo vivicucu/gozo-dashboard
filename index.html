@@ -165,51 +165,60 @@
 const SHEET_ID = '1WY5XCvZ5_qb9HpmlxPKJ7tAMG5OpLZ7QSSUKPUJQ1gk';
 const SHEET_NAME = '工作表1';
 
-const GA4_SHEET_ID = '12HHZ_14MfV7m_ymFMflzpKM5Z0fuhKE4-E9Djr4n5CQ';
+const GA4_SHEET_ID = '1D0iWELC8Xt3VUO23jaBpO6XT4eNTZZYP0yOgvCf9gKI';
+const GA4_SHEET_NAME = '流量來源';
 let ga4Data = [];
 
 async function fetchGA4Data() {
-  const url = `https://docs.google.com/spreadsheets/d/${GA4_SHEET_ID}/gviz/tq?tqx=out:json`;
+  // 使用 query 從第15行開始抓（跳過標題區）
+  const url = `https://docs.google.com/spreadsheets/d/${GA4_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(GA4_SHEET_NAME)}&range=A15:D315`;
   try {
     const res = await fetch(url);
     const text = await res.text();
     const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
-    const cols = json.table.cols.map(c => c.label);
-    ga4Data = json.table.rows
-      .map(row => {
-        const obj = {};
-        cols.forEach((col, i) => {
-          const cell = row.c[i];
-          obj[col] = cell ? (cell.v !== null ? cell.v : '') : '';
+    
+    ga4Data = [];
+    if (json.table && json.table.rows) {
+      json.table.rows.forEach(row => {
+        if (!row.c || !row.c[0] || !row.c[0].v) return;
+        const source = String(row.c[0].v).trim();
+        // 跳過標題行和空行
+        if (!source || source === 'sessionSourceMedium' || source === 'sessionSourceM') return;
+        ga4Data.push({
+          source: source,
+          activeUsers: Number((row.c[1] && row.c[1].v) || 0),
+          sessions: Number((row.c[2] && row.c[2].v) || 0),
+          newUsers: Number((row.c[3] && row.c[3].v) || 0),
         });
-        return obj;
-      })
-      .filter(r => r['工作階段來源/媒介'] && r['工作階段來源/媒介'] !== '工作階段來源/媒介');
+      });
+    }
     renderGA4();
   } catch(e) {
-    document.getElementById('ga4TrafficTable').innerHTML = '<tr><td colspan="4" class="error-msg">⚠️ GA4 資料載入失敗</td></tr>';
+    console.error('GA4 fetch error:', e);
+    document.getElementById('ga4TrafficTable').innerHTML = '<tr><td colspan="4" class="error-msg">⚠️ GA4 資料載入失敗，請確認試算表權限為「知道連結的任何人可檢視」</td></tr>';
   }
 }
 
 function renderGA4() {
   const sorted = [...ga4Data]
-    .sort((a, b) => (Number(b['活躍使用者']) || 0) - (Number(a['活躍使用者']) || 0))
+    .sort((a, b) => b.activeUsers - a.activeUsers)
     .slice(0, 10);
 
-  if (!sorted.length) return;
+  if (!sorted.length) {
+    document.getElementById('ga4TrafficBars').innerHTML = '<p style="color:var(--muted);font-size:12px;text-align:center;padding:20px">無資料</p>';
+    document.getElementById('ga4TrafficTable').innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">無資料</td></tr>';
+    return;
+  }
 
-  const maxVal = Number(sorted[0]['活躍使用者']) || 1;
+  const maxVal = sorted[0].activeUsers || 1;
   const colors = ['#4f8ef7','#34d89a','#f7a84f','#a78bfa','#f75f5f','#06d6a0','#f472b6','#fb923c','#facc15','#64748b'];
 
-  // 長條圖
   document.getElementById('ga4TrafficBars').innerHTML = sorted.map((row, i) => {
-    const val = Number(row['活躍使用者']) || 0;
-    const pct = (val / maxVal * 100).toFixed(1);
-    const name = row['工作階段來源/媒介'] || '';
+    const pct = (row.activeUsers / maxVal * 100).toFixed(1);
     return `<div class="ch-bar-wrap">
       <div class="ch-bar-lbl">
-        <span class="ch-bar-name" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</span>
-        <span class="ch-bar-val">${val.toLocaleString()}</span>
+        <span class="ch-bar-name" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${row.source}">${row.source}</span>
+        <span class="ch-bar-val">${row.activeUsers.toLocaleString()}</span>
       </div>
       <div class="ch-bar-track">
         <div class="ch-bar-fill" style="width:${pct}%;background:${colors[i]}"></div>
@@ -217,13 +226,12 @@ function renderGA4() {
     </div>`;
   }).join('');
 
-  // 表格
   document.getElementById('ga4TrafficTable').innerHTML = sorted.map((row, i) => `
     <tr>
       <td class="rank">${i+1}</td>
-      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${row['工作階段來源/媒介']}">${row['工作階段來源/媒介']}</td>
-      <td class="mono">${(Number(row['活躍使用者'])||0).toLocaleString()}</td>
-      <td class="mono">${(Number(row['工作階段'])||0).toLocaleString()}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${row.source}">${row.source}</td>
+      <td class="mono">${row.activeUsers.toLocaleString()}</td>
+      <td class="mono">${row.sessions.toLocaleString()}</td>
     </tr>`).join('');
 }
 const EXCLUDE_PRODUCTS = ['電商運費', '購物金(紅利)', '購物金（紅利）'];
