@@ -398,12 +398,15 @@ let startDate = null;
 let endDate = null;
 let currentChannel = 'all';
 
-function getChannelGroup(p) {
-  if (!p) return '其他';
-  if (p.includes('台灣官網') && p.startsWith('G_')) return '官網';
-  if (p.includes('Momo') || p.includes('momo')) return 'MOMO';
-  if (p.includes('蝦皮')) return '蝦皮';
-  return '其他';
+// 根據「客戶名稱」判斷通路
+function getChannelGroup(r) {
+  const customer = (r['客戶名稱'] || '').trim();
+  const salesType = (r['銷別'] || '').trim();
+  
+  if (customer.includes('富邦') || customer.includes('momo') || customer.toLowerCase().includes('momo')) return 'MOMO';
+  if (customer.includes('蝦皮') || customer.includes('Shopee')) return '蝦皮';
+  // 其餘視為官網（含直接消費者）
+  return '官網';
 }
 
 // 初始化日期：本月
@@ -470,8 +473,8 @@ async function fetchSheetData() {
       });
       return obj;
     }).filter(r => {
-      const p = r['電商平台'] || '';
-      return p.startsWith('G_') && !p.startsWith('R_') && !p.startsWith('M_');
+      // 只保留有銷別的記錄（銷貨 or 退貨），排除空白行
+      return r['銷別'] === '銷貨' || r['銷別'] === '退貨';
     });
 
     document.getElementById('lastUpdate').textContent = `更新：${new Date().toLocaleString('zh-TW')}`;
@@ -511,7 +514,7 @@ function getFiltered() {
     }
     // 通路篩選
     if (currentChannel !== 'all') {
-      if (getChannelGroup(r['電商平台']) !== currentChannel) return false;
+      if (getChannelGroup(r) !== currentChannel) return false;
     }
     return true;
   });
@@ -527,8 +530,8 @@ function renderAll() {
 }
 
 function renderKPIs(data) {
-  const sales = data.filter(r => Number(r['銷售量']) > 0);
-  const returns = data.filter(r => Number(r['銷售量']) < 0);
+  const sales = data.filter(r => r['銷別'] === '銷貨');
+  const returns = data.filter(r => r['銷別'] === '退貨');
 
   const gmv = sales.reduce((s, r) => s + (Number(r['折後金額']) || 0), 0);
   document.getElementById('kpiGMV').textContent = '$' + Math.round(gmv).toLocaleString('zh-TW');
@@ -550,7 +553,7 @@ function renderKPIs(data) {
 }
 
 function renderTopProducts(data) {
-  const sales = data.filter(r => Number(r['銷售量']) > 0 && !EXCLUDE_PRODUCTS.includes(r['品名']));
+  const sales = data.filter(r => r['銷別'] === '銷貨' && !EXCLUDE_PRODUCTS.includes(r['品名']));
   const map = {};
   sales.forEach(r => {
     const n = r['品名'] || '未知';
@@ -584,12 +587,12 @@ function renderChannelBars() {
       } else d = new Date(raw);
       if (!d || isNaN(d) || d < startDate || d > endDate) return false;
     }
-    return Number(r['銷售量']) > 0;
+    return Number(r['銷售量']) > 0 || r['銷別'] === '銷貨';
   });
 
   const map = {};
   data.forEach(r => {
-    const g = getChannelGroup(r['電商平台']);
+    const g = getChannelGroup(r);
     if (!map[g]) map[g] = 0;
     map[g] += Number(r['折後金額']) || 0;
   });
@@ -623,11 +626,10 @@ function renderReturnTable() {
 
   const map = {};
   data.forEach(r => {
-    const g = getChannelGroup(r['電商平台']);
+    const g = getChannelGroup(r);
     if (!map[g]) map[g] = { sales: 0, returns: 0 };
-    const qty = Number(r['銷售量']) || 0;
-    if (qty > 0) map[g].sales += qty;
-    if (qty < 0) map[g].returns += Math.abs(qty);
+    if (r['銷別'] === '銷貨') map[g].sales += Math.abs(Number(r['銷售量']) || 0);
+    if (r['銷別'] === '退貨') map[g].returns += Math.abs(Number(r['銷售量']) || 0);
   });
   const tbody = document.getElementById('returnTable');
   tbody.innerHTML = Object.entries(map).sort((a,b) => b[1].sales - a[1].sales).map(([name, d]) => {
@@ -637,6 +639,22 @@ function renderReturnTable() {
   }).join('');
 }
 
+
+function parseDate(raw) {
+  if (!raw) return null;
+  let d;
+  if (typeof raw === 'number') {
+    d = new Date((raw - 25569) * 86400 * 1000);
+  } else if (typeof raw === 'string' && raw.startsWith('Date(')) {
+    const parts = raw.match(/Date\((\d+),(\d+),(\d+)/);
+    if (parts) d = new Date(+parts[1], +parts[2], +parts[3]);
+  } else if (typeof raw === 'string') {
+    d = new Date(raw.substring(0, 10));
+  } else {
+    d = new Date(raw);
+  }
+  return (d && !isNaN(d)) ? d : null;
+}
 
 function renderTrend() {
   // 計算近 7 日（從今天往回數 7 天）
@@ -653,7 +671,7 @@ function renderTrend() {
   days.forEach(d => dailyGMV[d] = 0);
 
   allData.forEach(r => {
-    if (Number(r['銷售量']) <= 0) return;
+    if (r['銷別'] !== '銷貨') return;
     const raw = r['結帳時間'];
     if (!raw) return;
     let dateStr;
