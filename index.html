@@ -70,11 +70,14 @@
 
   .error-msg { color: var(--accent4); font-size: 11px; text-align: center; padding: 20px; }
 
-  .alert-pill { display:flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:7px 12px; font-size:11px; }
-  .alert-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; animation:blink 1.5s infinite; }
+  .alerts-section { margin-bottom:20px; }
+  .alerts-title { font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+  .alerts-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .alert-pill { display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 18px; font-size:13px; flex:1; min-width:200px; }
+  .alert-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; animation:blink 1.5s infinite; }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  .alert-text { color:var(--label); }
-  .alert-text strong { color:var(--text); }
+  .alert-text { color:var(--label); line-height:1.4; }
+  .alert-text strong { color:var(--text); font-size:15px; }
 
   .funnel-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
   .funnel-name { font-size:11px; color:var(--muted); width:100px; flex-shrink:0; }
@@ -94,8 +97,6 @@
 <div class="loading-bar" id="loadingBar"></div>
 
 <!-- 即時警示 -->
-<div id="alertsBar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
-
 <header>
   <div>
     <div class="site-title">gozo 購物網站監控中心</div>
@@ -123,6 +124,10 @@
   </div>
 </header>
 
+<div class="alerts-section">
+  <div class="alerts-title">即時警示</div>
+  <div class="alerts-row" id="alertsBar"></div>
+</div>
 <div class="section-label">核心數字</div>
 <div class="kpi-grid">
   <div class="kpi-card blue">
