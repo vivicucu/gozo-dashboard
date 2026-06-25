@@ -195,13 +195,13 @@
 <div class="section-label" style="margin-top:8px">GA4 流量分析</div>
 <div class="two-col">
   <div class="card">
-    <div class="card-title">流量來源 Top 10（活躍使用者）</div>
+    <div class="card-title">GA4 事件 Top 10（使用者數）</div>
     <div id="ga4TrafficBars"></div>
   </div>
   <div class="card">
-    <div class="card-title">流量來源明細</div>
+    <div class="card-title">GA4 事件明細</div>
     <table class="data-table">
-      <thead><tr><th>#</th><th>來源/媒介</th><th>使用者</th><th>工作階段</th></tr></thead>
+      <thead><tr><th>#</th><th>事件名稱</th><th>使用者數</th><th>事件次數</th></tr></thead>
       <tbody id="ga4TrafficTable"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">載入中...</td></tr></tbody>
     </table>
   </div>
@@ -211,8 +211,8 @@
 const SHEET_ID = '1WY5XCvZ5_qb9HpmlxPKJ7tAMG5OpLZ7QSSUKPUJQ1gk';
 const SHEET_NAME = '工作表1';
 
-const GA4_SHEET_ID = '1D0iWELC8Xt3VUO23jaBpO6XT4eNTZZYP0yOgvCf9gKI';
-const GA4_SHEET_NAME = '流量來源';
+const GA4_SHEET_ID = '1r3yBJgCKKr-hNgRmydcmqvj5TmjxcLQY3Yloq5rxYvw';
+const GA4_SHEET_NAME = '工作表1';
 const GA4_EVENTS_SHEET_ID = '1r3yBJgCKKr-hNgRmydcmqvj5TmjxcLQY3Yloq5rxYvw';
 const GA4_EVENTS_SHEET_NAME = '流量來源';
 let ga4Events = {};
@@ -327,8 +327,8 @@ function renderFunnel() {
 }
 
 async function fetchGA4Data() {
-  // 使用 query 從第15行開始抓（跳過標題區）
-  const url = `https://docs.google.com/spreadsheets/d/${GA4_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(GA4_SHEET_NAME)}&range=A15:D315`;
+  // 流量來源 tab 的資料是 eventName, eventCount, totalUsers，從第15行開始
+  const url = `https://docs.google.com/spreadsheets/d/${GA4_EVENTS_SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(GA4_EVENTS_SHEET_NAME)}&range=A15:C60`;
   try {
     const res = await fetch(url);
     const text = await res.text();
@@ -339,20 +339,19 @@ async function fetchGA4Data() {
       json.table.rows.forEach(row => {
         if (!row.c || !row.c[0] || !row.c[0].v) return;
         const source = String(row.c[0].v).trim();
-        // 跳過標題行和空行
-        if (!source || source === 'sessionSourceMedium' || source === 'sessionSourceM') return;
+        if (!source || source === 'eventName') return;
         ga4Data.push({
           source: source,
-          activeUsers: Number((row.c[1] && row.c[1].v) || 0),
-          sessions: Number((row.c[2] && row.c[2].v) || 0),
-          newUsers: Number((row.c[3] && row.c[3].v) || 0),
+          activeUsers: Number((row.c[2] && row.c[2].v) || 0), // totalUsers
+          sessions: Number((row.c[1] && row.c[1].v) || 0),    // eventCount
+          newUsers: 0,
         });
       });
     }
     renderGA4();
   } catch(e) {
     console.error('GA4 fetch error:', e);
-    document.getElementById('ga4TrafficTable').innerHTML = '<tr><td colspan="4" class="error-msg">⚠️ GA4 資料載入失敗，請確認試算表權限為「知道連結的任何人可檢視」</td></tr>';
+    document.getElementById('ga4TrafficTable').innerHTML = '<tr><td colspan="4" class="error-msg">⚠️ GA4 資料載入失敗</td></tr>';
   }
 }
 
