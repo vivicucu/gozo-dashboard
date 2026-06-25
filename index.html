@@ -166,7 +166,7 @@
 
 <!-- 近 7 日 GMV 趨勢 -->
 <div class="card" style="margin-bottom:20px">
-  <div class="card-title">近 7 日 每日 GMV 趨勢</div>
+  <div class="card-title trend-title">每日 GMV 趨勢</div>
   <div style="position:relative;height:160px">
     <canvas id="trendChart"></canvas>
   </div>
@@ -656,14 +656,21 @@ function parseDate(raw) {
 }
 
 function renderTrend() {
-  // 計算近 7 日（從今天往回數 7 天）
-  const today = new Date();
+  // 根據目前篩選的日期範圍，計算每日 GMV
+  const s = startDate || new Date(new Date().setDate(new Date().getDate() - 6));
+  const e = endDate || new Date();
+
+  // 列出日期範圍內每一天（最多顯示 60 天）
   const days = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    days.push(d.toISOString().slice(0, 10));
+  const cur = new Date(s);
+  cur.setHours(0, 0, 0, 0);
+  const end = new Date(e);
+  end.setHours(23, 59, 59, 999);
+  while (cur <= end && days.length < 60) {
+    days.push(cur.toISOString().slice(0, 10));
+    cur.setDate(cur.getDate() + 1);
   }
+  if (!days.length) return;
 
   // 彙總每日 GMV（只計算銷貨，排除退貨）
   const dailyGMV = {};
@@ -673,12 +680,18 @@ function renderTrend() {
     if (r['銷別'] !== '銷貨') return;
     const raw = r['結帳時間'];
     if (!raw) return;
-    let dateStr;
-    const _td = parseDate(raw); if (_td) dateStr = fmt(_td);
-    if (days.includes(dateStr)) {
-      dailyGMV[dateStr] += Number(r['折後金額']) || 0;
+    const _td = parseDate(raw);
+    if (_td) {
+      const dateStr = fmt(_td);
+      if (dailyGMV.hasOwnProperty(dateStr)) {
+        dailyGMV[dateStr] += Number(r['折後金額']) || 0;
+      }
     }
   });
+
+  // 標題動態顯示日期範圍
+  const titleEl = document.querySelector('.trend-title');
+  if (titleEl) titleEl.textContent = `每日 GMV 趨勢（${days[0].slice(5)} ～ ${days[days.length-1].slice(5)}）`;
 
   const labels = days.map(d => d.slice(5)); // MM-DD
   const values = days.map(d => Math.round(dailyGMV[d]));
